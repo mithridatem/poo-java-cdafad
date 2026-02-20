@@ -170,7 +170,7 @@ public class GameRepository {
             String sql = "SELECT g.id, g.title, g.description, g.publish_at, g.manufacturer_id, m.name FROM game AS g" +
                     " INNER JOIN manufacturer AS m ON g.manufacturer_id = m.id";
             //2 Préparation de la requête
-            PreparedStatement ps = connection.prepareStatement(sql,  Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement(sql);
             //3 Récupération du resultat
             ResultSet rs = ps.executeQuery();
             //4 Construction de l'ArrayList<Game>
