@@ -3,11 +3,13 @@ package com.exemple.repository;
 import com.exemple.database.Mysql;
 import com.exemple.entity.Category;
 import com.exemple.entity.Game;
+import com.exemple.entity.Manufacturer;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 public class GameRepository {
     //Attribut
@@ -82,5 +84,74 @@ public class GameRepository {
             ex.printStackTrace();
         }
         return newgame;
+    }
+
+    private Game findGameById(int id) {
+        Game game = null;
+        try {
+            //1 Ecrire la requête
+            String sql = "SELECT g.id, g.title, g.description, d.publish_at, g.manufacturer_id, m.name FROM game" +
+                    "INNER JOIN manufacturer AS m ON g.manufacturer_id = m.id WHERE g.id = ?";
+            //2 Préparer la requête
+            PreparedStatement ps = connection.prepareStatement(sql);
+            //3 Assigner les paramètres
+            ps.setInt(1, id);
+            //4 Récupérer le resultat
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Manufacturer manufacturer = new Manufacturer(rs.getInt("manufacturer_id"), rs.getString("name"));
+                game = new Game(
+                        rs.getInt("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getDate("publish_at"),
+                        manufacturer
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return game;
+    }
+
+    private ArrayList<Category> findCategoryGame(Game game) {
+        ArrayList<Category> categories = new ArrayList<>();
+        try {
+            //1 Ecrire la requête
+            String sql = "SELECT c.id, c.name FROM category AS c\n" +
+                    "INNER JOIN game_category AS gc ON c.id = gc.category_id\n" +
+                    "WHERE gc.game_id = ?";
+            //2 Préparer la requête
+            PreparedStatement ps = connection.prepareStatement(sql);
+            //3 Assigner les paramètres
+            ps.setInt(1, game.getId());
+            //4 Récupérer le resultat
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Category category = new Category(rs.getInt("id"), rs.getString("name"));
+                categories.add(category);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return categories;
+    }
+
+    public Game find(int id)
+    {
+        Game game = null;
+        try {
+            //récupérer le Jeu
+            game = this.findGameById(id);
+            //récupérer la liste des categories
+            ArrayList<Category> categories = this.findCategoryGame(game);
+            //assignation des categories
+            for(Category category : categories) {
+                game.addCategory(category);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return game;
     }
 }
